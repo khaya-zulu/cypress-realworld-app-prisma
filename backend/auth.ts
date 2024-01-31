@@ -2,15 +2,15 @@ import bcrypt from "bcryptjs";
 import passport from "passport";
 import express, { Request, Response } from "express";
 import { User } from "../src/models/user";
-import { getUserBy, getUserById } from "./database";
+import { prisma } from "./database";
 
 const LocalStrategy = require("passport-local").Strategy;
 const router = express.Router();
 
 // configure passport for local strategy
 passport.use(
-  new LocalStrategy(function (username: string, password: string, done: Function) {
-    const user = getUserBy("username", username);
+  new LocalStrategy(async function (username: string, password: string, done: Function) {
+    const user = await prisma.user.findUnique({ where: { username } });
 
     const failureMessage = "Incorrect username or password.";
     if (!user) {
@@ -30,8 +30,9 @@ passport.serializeUser(function (user: User, done) {
   done(null, user.id);
 });
 
-passport.deserializeUser(function (id: string, done) {
-  const user = getUserById(id);
+passport.deserializeUser(async function (id: string, done) {
+  const user = await prisma.user.findUnique({ where: { id } });
+  // @ts-ignore
   done(null, user);
 });
 

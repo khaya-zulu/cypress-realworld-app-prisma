@@ -29,6 +29,7 @@ const useStyles = makeStyles((theme) => ({
 const TransactionTitle: React.FC<{
   transaction: TransactionResponseItem;
 }> = ({ transaction }) => {
+  console.log("transaction", transaction);
   const classes = useStyles();
 
   return (

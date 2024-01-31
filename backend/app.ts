@@ -24,6 +24,7 @@ import testDataRoutes from "./testdata-routes";
 import { checkAuth0Jwt, verifyOktaToken, checkCognitoJwt, checkGoogleJwt } from "./helpers";
 import resolvers from "./graphql/resolvers";
 import { frontendPort, getBackendPort } from "../src/utils/portUtils";
+import { orderBy } from "lodash";
 
 require("dotenv").config();
 
@@ -68,9 +69,9 @@ app.use(passport.session());
 app.use(paginate.middleware(+process.env.PAGINATION_PAGE_SIZE!));
 
 /* istanbul ignore next */
-if (process.env.NODE_ENV === "test" || process.env.NODE_ENV === "development") {
-  app.use("/testData", testDataRoutes);
-}
+// if (process.env.NODE_ENV === "test" || process.env.NODE_ENV === "development") {
+//   app.use("/testData", testDataRoutes);
+// }
 
 app.use(auth);
 
@@ -96,9 +97,14 @@ if (process.env.VITE_GOOGLE) {
 
 app.use(
   "/graphql",
-  graphqlHTTP({
-    schema: schemaWithResolvers,
-    graphiql: true,
+  graphqlHTTP((req: any) => {
+    return {
+      schema: schemaWithResolvers,
+      graphiql: true,
+      context: {
+        user: req?.user,
+      },
+    };
   })
 );
 

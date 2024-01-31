@@ -34,6 +34,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
   pagination,
   filterComponent,
 }) => {
+  console.log("TransactionList-ln 100", transactions);
   const classes = useStyles();
 
   const showEmptyList = !isLoading && transactions?.length === 0;

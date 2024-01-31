@@ -1,11 +1,10 @@
-import { getBankAccountsByUserId } from "../../database";
+import { prisma } from "../../database";
 
 const Query = {
-  listBankAccount(obj: any, args: any, ctx: any) {
+  async listBankAccount(obj: any, args: any, ctx: any) {
     /* istanbul ignore next */
     try {
-      const accounts = getBankAccountsByUserId(ctx.user.id!);
-
+      const accounts = await prisma.bankAccount.findMany({ where: { userId: ctx.user.id } });
       return accounts;
       /* istanbul ignore next */
     } catch (err: any) {

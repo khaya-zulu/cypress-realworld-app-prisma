@@ -65,6 +65,9 @@ import {
   isCommentNotification,
 } from "../src/utils/transactionUtils";
 import { DbSchema } from "../src/models/db-schema";
+import { PrismaClient } from "@prisma/client";
+
+export const prisma = new PrismaClient();
 
 export type TDatabase = {
   users: User[];

@@ -253,6 +253,39 @@
       "isDeleted": false,
       "createdAt": "2019-09-30T14:20:07.043Z",
       "modifiedAt": "2020-05-21T22:40:28.910Z"
+    },
+    {
+      "id": "yEIgYv3WT",
+      "uuid": "25b0ca83-1fee-438c-82dc-9993c5824439",
+      "userId": "cls21ui0y0000mqn30esg5ukq",
+      "bankName": "Testing",
+      "accountNumber": "000123456789",
+      "routingNumber": "021000021",
+      "isDeleted": false,
+      "createdAt": "2024-01-31T18:53:26.225Z",
+      "modifiedAt": "2024-01-31T18:53:26.225Z"
+    },
+    {
+      "id": "spMy_21N3",
+      "uuid": "b4055755-77f1-4659-aa0a-c23d25bc976d",
+      "userId": "cls268il10000fyhm7q2u6b2f",
+      "bankName": "Testing",
+      "accountNumber": "21310929012",
+      "routingNumber": "121212112",
+      "isDeleted": false,
+      "createdAt": "2024-01-31T19:19:42.347Z",
+      "modifiedAt": "2024-01-31T19:19:42.347Z"
+    },
+    {
+      "id": "YXNVNSKxN",
+      "uuid": "3014f627-3496-480c-b802-a0e441371d09",
+      "userId": "cls268il10000fyhm7q2u6b2f",
+      "bankName": "FNBaA",
+      "accountNumber": "000123456789",
+      "routingNumber": "021000021",
+      "isDeleted": false,
+      "createdAt": "2024-01-31T19:24:14.959Z",
+      "modifiedAt": "2024-01-31T19:24:14.959Z"
     }
   ],
   "transactions": [

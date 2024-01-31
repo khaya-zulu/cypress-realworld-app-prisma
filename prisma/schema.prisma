@@ -1,0 +1,157 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PrivacyLevel {
+  PUBLIC
+  PRIVATE
+  CONTACTS
+}
+
+enum TransactionStatus {
+  COMPLETE
+  PENDING
+}
+
+enum TransactionRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum BankTransferType {
+  DEPOSIT
+  WITHDRAWAL
+}
+
+model User {
+  id                   String         @id @default(cuid())
+  uuid                 String         @unique @default(uuid())
+  firstName            String
+  lastName             String
+  username             String         @unique
+  password             String
+  email                String?        
+  phoneNumber          String?
+  avatar               String?
+  balance              Int?          @default(0)
+  defaultPrivacyLevel  PrivacyLevel?   @default(PUBLIC)
+  contacts             Contact[]      @relation("users")
+  includedInContacts   Contact[]      @relation("contactUser")
+  bankAccount          BankAccount?
+  transactionsReceived Transaction[]  @relation("receiver")
+  transactionsSent     Transaction[]  @relation("sender")
+  likes                Like[]
+  comments             Comment[]
+  notifications        Notification[]
+  transfers            BankTransfer[]
+  createdAt            DateTime       @default(now())
+  modifiedAt           DateTime       @updatedAt
+}
+
+model Contact {
+  id            String   @id @default(cuid())
+  uuid          String   @unique @default(uuid())
+  userId        String
+  user          User     @relation("users", fields: [userId], references: [id])
+  contactUserId String?
+  contactUser   User?    @relation("contactUser", fields: [contactUserId], references: [id])
+  createdAt     DateTime @default(now())
+  modifiedAt    DateTime @updatedAt
+}
+
+model BankAccount {
+  id            String   @id @default(cuid())
+  uuid          String   @unique @default(uuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id])
+  bankName      String
+  accountNumber String
+  routingNumber String
+  isDeleted     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  modifiedAt    DateTime @updatedAt
+}
+
+model Transaction {
+  id                  String                    @id @default(cuid())
+  uuid                String                    @unique @default(uuid())
+  source              String?
+  amount              Int
+  description         String
+  privacyLevel        PrivacyLevel              @default(PUBLIC)
+  receiver            User                      @relation("receiver", fields: [receiverId], references: [id])
+  receiverId          String
+  sender              User                      @relation("sender", fields: [senderId], references: [id])
+  senderId            String
+  balanceAtCompletion Int?
+  status              TransactionStatus?
+  requestStatus       TransactionRequestStatus?
+  requestResolvedAt   DateTime?
+  likes               Like[]
+  comments            Comment[]
+  createdAt           DateTime                  @default(now())
+  modifiedAt          DateTime                  @updatedAt
+  notifications       Notification[]
+  bankTransfer        BankTransfer?
+}
+
+model Like {
+  id            String         @id @default(cuid())
+  uuid          String         @unique @default(uuid())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id])
+  transactionId String?
+  transaction   Transaction?   @relation(fields: [transactionId], references: [id])
+  createdAt     DateTime       @default(now())
+  modifiedAt    DateTime       @updatedAt
+  Notification  Notification[]
+}
+
+model Comment {
+  id            String      @id @default(cuid())
+  uuid          String      @unique @default(uuid())
+  content       String
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  createdAt     DateTime    @default(now())
+  modifiedAt    DateTime    @updatedAt
+}
+
+model Notification {
+  id            String       @id @default(cuid())
+  uuid          String       @unique @default(uuid())
+  userId        String
+  user          User         @relation(fields: [userId], references: [id])
+  likeId        String?
+  like          Like?        @relation(fields: [likeId], references: [id])
+  transactionId String?
+  transaction   Transaction? @relation(fields: [transactionId], references: [id])
+  isRead        Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  modifiedAt    DateTime     @updatedAt
+}
+
+model BankTransfer {
+  id            String           @id @default(cuid())
+  uuid          String           @unique @default(uuid())
+  userId        String
+  user          User             @relation(fields: [userId], references: [id])
+  source        String
+  amount        Int
+  type          BankTransferType
+  transactionId String?          @unique
+  transaction   Transaction?     @relation(fields: [transactionId], references: [id])
+  createdAt     DateTime         @default(now())
+  modifiedAt    DateTime         @updatedAt
+}

@@ -5,6 +5,7 @@ import {
   createNotifications,
   updateNotificationById,
   getUnreadNotificationsByUserId,
+  prisma,
 } from "./database";
 import { ensureAuthenticated, validateMiddleware } from "./helpers";
 import {
@@ -17,9 +18,11 @@ const router = express.Router();
 // Routes
 
 //GET /notifications/
-router.get("/", ensureAuthenticated, (req, res) => {
+router.get("/", ensureAuthenticated, async (req, res) => {
   /* istanbul ignore next */
-  const notifications = getUnreadNotificationsByUserId(req.user?.id!);
+  const notifications = await prisma.notification.findMany({
+    where: { userId: req.user?.id, isRead: false },
+  });
 
   res.status(200);
   res.json({ results: notifications });

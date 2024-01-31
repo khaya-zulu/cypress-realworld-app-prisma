@@ -1,6 +1,7 @@
 ///<reference path="types.ts" />
 
 import express from "express";
+import bcrypt from "bcryptjs";
 import { isEqual, pick } from "lodash/fp";
 
 import {
@@ -11,6 +12,7 @@ import {
   getUserByUsername,
   searchUsers,
   removeUserFromResults,
+  prisma,
 } from "./database";
 import { User } from "../src/models/user";
 import { ensureAuthenticated, validateMiddleware } from "./helpers";
@@ -38,13 +40,20 @@ router.get("/search", ensureAuthenticated, validateMiddleware([searchValidation]
   res.status(200).json({ results: users });
 });
 
-router.post("/", userFieldsValidator, validateMiddleware(isUserValidator), (req, res) => {
+router.post("/", userFieldsValidator, validateMiddleware(isUserValidator), async (req, res) => {
   const userDetails: User = req.body;
 
-  const user = createUser(userDetails);
+  const user = await prisma.user.create({
+    data: {
+      firstName: userDetails.firstName,
+      lastName: userDetails.lastName,
+      username: userDetails.username,
+      password: bcrypt.hashSync(userDetails.password!, 10),
+    },
+  });
 
   res.status(201);
-  res.json({ user: user });
+  res.json({ user });
 });
 
 router.get(

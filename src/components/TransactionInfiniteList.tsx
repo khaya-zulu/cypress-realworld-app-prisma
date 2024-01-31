@@ -28,6 +28,7 @@ const TransactionInfiniteList: React.FC<TransactionListProps> = ({
   loadNextPage,
   pagination,
 }) => {
+  console.log("InfiniteListTransactions-ln 32", transactions);
   const classes = useStyles();
   const theme = useTheme();
   const isXsBreakpoint = useMediaQuery(theme.breakpoints.down("xs"));

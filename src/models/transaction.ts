@@ -28,6 +28,7 @@ export interface Transaction {
   requestResolvedAt?: Date | string;
   createdAt: Date;
   modifiedAt: Date;
+  comments?: any[];
 }
 
 export interface FakeTransaction {

@@ -2,12 +2,7 @@
 
 import express from "express";
 
-import {
-  getBankAccountsByUserId,
-  getBankAccountById,
-  createBankAccountForUser,
-  removeBankAccountById,
-} from "./database";
+import { prisma } from "./database";
 import { ensureAuthenticated, validateMiddleware } from "./helpers";
 import { shortIdValidation, isBankAccountValidator } from "./validators";
 const router = express.Router();
@@ -15,9 +10,11 @@ const router = express.Router();
 // Routes
 
 //GET /bankAccounts (scoped-user)
-router.get("/", ensureAuthenticated, (req, res) => {
+router.get("/", ensureAuthenticated, async (req, res) => {
+  const userId = req.user?.id;
+
   /* istanbul ignore next */
-  const accounts = getBankAccountsByUserId(req.user?.id!);
+  const accounts = await prisma.bankAccount.findMany({ where: { userId } });
 
   res.status(200);
   res.json({ results: accounts });
@@ -28,10 +25,10 @@ router.get(
   "/:bankAccountId",
   ensureAuthenticated,
   validateMiddleware([shortIdValidation("bankAccountId")]),
-  (req, res) => {
+  async (req, res) => {
     const { bankAccountId } = req.params;
 
-    const account = getBankAccountById(bankAccountId);
+    const account = await prisma.bankAccount.findUnique({ where: { id: bankAccountId } });
 
     res.status(200);
     res.json({ account });
@@ -39,23 +36,37 @@ router.get(
 );
 
 //POST /bankAccounts (scoped-user)
-router.post("/", ensureAuthenticated, validateMiddleware(isBankAccountValidator), (req, res) => {
-  /* istanbul ignore next */
-  const account = createBankAccountForUser(req.user?.id!, req.body);
+router.post(
+  "/",
+  ensureAuthenticated,
+  validateMiddleware(isBankAccountValidator),
+  async (req, res) => {
+    /* istanbul ignore next */
+    const accountDetails = req.body;
 
-  res.status(200);
-  res.json({ account });
-});
+    const account = await prisma.bankAccount.create({
+      data: {
+        bankName: accountDetails.bankName!,
+        accountNumber: accountDetails.accountNumber!,
+        routingNumber: accountDetails.routingNumber!,
+        userId: req.user?.id!,
+      },
+    });
+
+    res.status(200);
+    res.json({ account });
+  }
+);
 
 //DELETE (soft) /bankAccounts (scoped-user)
 router.delete(
   "/:bankAccountId",
   ensureAuthenticated,
   validateMiddleware([shortIdValidation("bankAccountId")]),
-  (req, res) => {
+  async (req, res) => {
     const { bankAccountId } = req.params;
 
-    const account = removeBankAccountById(bankAccountId);
+    const account = await prisma.bankAccount.delete({ where: { id: bankAccountId } });
 
     res.status(200);
     res.json({ account });

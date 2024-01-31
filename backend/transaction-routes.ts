@@ -11,6 +11,7 @@ import {
   getTransactionsForUserForApi,
   getPublicTransactionsByQuery,
 } from "./database";
+import { TransactionRequestStatus } from "../src/models";
 import { ensureAuthenticated, validateMiddleware } from "./helpers";
 import {
   sanitizeTransactionStatus,
@@ -22,6 +23,9 @@ import {
   isTransactionPublicQSValidator,
 } from "./validators";
 import { getPaginatedItems } from "../src/utils/transactionUtils";
+import { prisma } from "./database";
+import { Transaction } from "@prisma/client";
+
 const router = express.Router();
 
 // Routes
@@ -95,29 +99,69 @@ router.get(
   "/public",
   ensureAuthenticated,
   validateMiddleware(isTransactionPublicQSValidator),
-  (req, res) => {
-    const isFirstPage = req.query.page === 1;
+  async (req, res) => {
+    /* istanbul ignore next */
+    const userId = req.user?.id;
+
+    if (!userId) throw new Error("User not found");
+
+    // all public transactions, together with the contact's trnsactions
+    const publicTransactionsWithContacts = await prisma.transaction.findMany({
+      where: { privacyLevel: "PUBLIC" },
+      include: {
+        receiver: { select: { firstName: true, lastName: true, avatar: true } },
+        sender: { select: { firstName: true, lastName: true, avatar: true } },
+        comments: {
+          select: {
+            id: true,
+            uuid: true,
+            content: true,
+            userId: true,
+            transactionId: true,
+            createdAt: true,
+            modifiedAt: true,
+          },
+        },
+        likes: {
+          select: {
+            id: true,
+            uuid: true,
+            userId: true,
+            transactionId: true,
+            createdAt: true,
+            modifiedAt: true,
+          },
+        },
+      },
+    });
 
     /* istanbul ignore next */
-    let transactions = !isEmpty(req.query)
-      ? getPublicTransactionsByQuery(req.user?.id!, req.query)
-      : /* istanbul ignore next */
-        getPublicTransactionsDefaultSort(req.user?.id!);
-
-    const { contactsTransactions, publicTransactions } = transactions;
-
-    let publicTransactionsWithContacts;
-
-    if (isFirstPage) {
-      const firstFiveContacts = slice(0, 5, contactsTransactions);
-
-      publicTransactionsWithContacts = concat(firstFiveContacts, publicTransactions);
-    }
+    const publicTransactions = publicTransactionsWithContacts.map((t) => ({
+      id: t.id,
+      uuid: t.uuid,
+      source: t.source,
+      amount: t.amount,
+      description: t.description,
+      privacyLevel: t.privacyLevel.toLowerCase(),
+      receiverId: t.receiverId,
+      receiverName: t.receiver.firstName,
+      receiverAvatar: t.receiver.avatar,
+      senderId: t.senderId,
+      senderName: t.sender.firstName,
+      senderAvatar: t.sender.avatar,
+      comments: t.comments,
+      likes: t.likes,
+      balanceAtCompletion: t.balanceAtCompletion,
+      status: t.status?.toLowerCase(),
+      requestResolvedAt: t.requestResolvedAt,
+      createdAt: t.createdAt,
+      modifiedAt: t.modifiedAt,
+    }));
 
     const { totalPages, data: paginatedItems } = getPaginatedItems(
       req.query.page,
       req.query.limit,
-      isFirstPage ? publicTransactionsWithContacts : publicTransactions
+      publicTransactions
     );
 
     res.status(200);
@@ -138,14 +182,32 @@ router.post(
   "/",
   ensureAuthenticated,
   validateMiddleware(isTransactionPayloadValidator),
-  (req, res) => {
-    const transactionPayload = req.body;
-    const transactionType = transactionPayload.transactionType;
+  async (req, res) => {
+    const transactionPayload: {
+      transactionType: "payment" | "request";
+      amount: number;
+      description: string;
+      senderId: string;
+      receiverId: string;
+    } = req.body;
 
-    remove("transactionType", transactionPayload);
+    const { transactionType, ...data } = transactionPayload;
 
-    /* istanbul ignore next */
-    const transaction = createTransaction(req.user?.id!, transactionType, transactionPayload);
+    const user = await prisma.user.findUnique({
+      where: { id: req.user?.id! },
+      select: { balance: true },
+    });
+
+    const transaction = await prisma.transaction.create({
+      data: {
+        ...data,
+        requestStatus: transactionType === "request" ? "PENDING" : null,
+        balanceAtCompletion: user?.balance,
+      },
+    });
+
+    // /* istanbul ignore next */
+    // const transaction = createTransaction(req.user?.id!, transactionType, transactionPayload);
 
     res.status(200);
     res.json({ transaction });

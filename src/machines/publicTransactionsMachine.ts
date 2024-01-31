@@ -10,6 +10,7 @@ export const publicTransactionsMachine = dataMachine("publicTransactions").withC
       const resp = await httpClient.get(`http://localhost:${backendPort}/transactions/public`, {
         params: !isEmpty(payload) ? payload : undefined,
       });
+      console.log("return stuff", resp.data);
       return resp.data;
     },
   },
