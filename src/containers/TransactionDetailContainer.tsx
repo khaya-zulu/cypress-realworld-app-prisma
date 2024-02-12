@@ -4,7 +4,6 @@ import { useParams } from "react-router-dom";
 import TransactionDetail from "../components/TransactionDetail";
 import { Transaction } from "../models";
 import { transactionDetailMachine } from "../machines/transactionDetailMachine";
-import { first } from "lodash/fp";
 import { Interpreter } from "xstate";
 import { AuthMachineContext, AuthMachineEvents } from "../machines/authMachine";
 
@@ -31,7 +30,8 @@ const TransactionDetailsContainer: React.FC<Props> = ({ authService }) => {
 
   const transactionUpdate = (payload: any) => sendTransactionDetail("UPDATE", payload);
 
-  const transaction = first(transactionDetailState.context?.results);
+  console.log("🔥".repeat(100), transactionDetailState.context);
+  const transaction = transactionDetailState.context?.results?.[0];
   const currentUser = authState?.context?.user;
 
   return (

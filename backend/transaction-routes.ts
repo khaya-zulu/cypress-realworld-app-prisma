@@ -219,13 +219,26 @@ router.get(
   "/:transactionId",
   ensureAuthenticated,
   validateMiddleware([shortIdValidation("transactionId")]),
-  (req, res) => {
+  async (req, res) => {
     const { transactionId } = req.params;
 
-    const transaction = getTransactionByIdForApi(transactionId);
+    // const transaction = getTransactionByIdForApi(transactionId);
+
+    const transaction = await prisma.transaction.findUniqueOrThrow({
+      where: { id: transactionId },
+      include: { receiver: true, sender: true, comments: true, likes: true },
+    });
+
+    const formattedTransaction = {
+      ...transaction,
+      receiverName: transaction.receiver.firstName,
+      senderName: transaction.sender.firstName,
+      receiverAvatar: transaction.receiver.avatar,
+      senderAvatar: transaction.sender.avatar,
+    };
 
     res.status(200);
-    res.json({ transaction });
+    res.json({ transaction: formattedTransaction });
   }
 );
 
