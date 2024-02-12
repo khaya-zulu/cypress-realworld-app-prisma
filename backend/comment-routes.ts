@@ -1,7 +1,7 @@
 ///<reference path="types.ts" />
 
 import express from "express";
-import { getCommentsByTransactionId, createComments } from "./database";
+import { createComments, prisma } from "./database";
 import { ensureAuthenticated, validateMiddleware } from "./helpers";
 import { shortIdValidation, isCommentValidator } from "./validators";
 const router = express.Router();
@@ -13,9 +13,11 @@ router.get(
   "/:transactionId",
   ensureAuthenticated,
   validateMiddleware([shortIdValidation("transactionId")]),
-  (req, res) => {
+  async (req, res) => {
     const { transactionId } = req.params;
-    const comments = getCommentsByTransactionId(transactionId);
+    // const comments = getCommentsByTransactionId(transactionId);
+
+    const comments = await prisma.comment.findMany({ where: { transactionId } });
 
     res.status(200);
     res.json({ comments });

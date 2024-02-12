@@ -2,17 +2,19 @@
 
 import express from "express";
 
-import { getContactsByUsername, removeContactById, createContactForUser } from "./database";
+import { getContactsByUsername, removeContactById, createContactForUser, prisma } from "./database";
 import { ensureAuthenticated, validateMiddleware } from "./helpers";
 import { shortIdValidation } from "./validators";
 const router = express.Router();
 
 // Routes
 //GET /contacts/:username
-router.get("/:username", (req, res) => {
+router.get("/:username", async (req, res) => {
   const { username } = req.params;
 
-  const contacts = getContactsByUsername(username);
+  // const contacts = getContactsByUsername(username);
+
+  const contacts = await prisma.contact.findMany({ where: { user: { username } } });
 
   res.status(200);
   res.json({ contacts });

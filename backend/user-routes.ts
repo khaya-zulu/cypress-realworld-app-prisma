@@ -60,7 +60,7 @@ router.get(
   "/:userId",
   ensureAuthenticated,
   validateMiddleware([shortIdValidation("userId")]),
-  (req, res) => {
+  async (req, res) => {
     const { userId } = req.params;
 
     // Permission: account owner
@@ -71,17 +71,24 @@ router.get(
       });
     }
 
-    const user = getUserById(userId);
+    // const user = getUserById(userId);
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
 
     res.status(200);
     res.json({ user });
   }
 );
 
-router.get("/profile/:username", (req, res) => {
+router.get("/profile/:username", async (req, res) => {
   const { username } = req.params;
 
-  const user = pick(["firstName", "lastName", "avatar"], getUserByUsername(username));
+  // const user = pick(["firstName", "lastName", "avatar"], getUserByUsername(username));
+
+  const user = await prisma.user.findUnique({
+    where: { username },
+    select: { firstName: true, lastName: true, avatar: true },
+  });
 
   res.status(200);
   res.json({ user });
